@@ -4,7 +4,6 @@
 # @File : detection_text.py
 # @Software : PyCharm
 
-
 import cv2
 import numpy as np
 from scipy import signal
@@ -15,21 +14,23 @@ absolute_path = os.path.dirname(__file__)
 
 
 def removeWatermark(image, laplace):
-    # 设置身份证的宽高为445*280
+    # 预设身份证的尺寸为445*280
     card_size = (445, 280)
+
     # 水印laplace模板
-    template_wm = [np.load(absolute_path + '/template/watermark1_laplace.npy'),
-                   np.load(absolute_path + '/template/watermark2_laplace.npy')]
+    template_wm = [np.load(absolute_path + '/template/watermark1_laplace.npy')]
+
     # 二值图模板用于生成蒙版以进行后续去水印操作
-    img_wm = [np.load(absolute_path + '/template/watermark1_solid.npy'),
-              np.load(absolute_path + '/template/watermark2_solid.npy')]
+    img_wm = [np.load(absolute_path + '/template/watermark1_solid.npy')]
     img_shape = [img.shape for img in img_wm]
+
     # 锐化内核
     kernel = np.array([[0, -1, 0],
                        [-1, 5, -1],
                        [0, -1, 0]], np.float32)
     mask = cv2.filter2D(laplace/255, -1, kernel=template_wm[0])
     irange, jrange = np.where(mask == np.max(mask))
+
     # 利用mask获取水印蒙版
     mask = np.zeros(mask.shape, np.uint8)
     for i in irange:
@@ -59,6 +60,7 @@ def removeWatermark(image, laplace):
                 wj2 -= bj2-card_size[0]
                 bj2 = card_size[0]
             mask[bi1:bi2, bj1:bj2] += img_wm[0][wi1:wi2, wj1:wj2]
+
     # 假设水印的灰度值为mc，以不透明度alpha叠加
     # 原图的灰度值为b，叠加后的灰度值a可由下式计算
     # a = mc * alpha * transparency + b * (1 - alpha * transparency)
@@ -166,8 +168,8 @@ def getTextLine(image, points):
         card_image.reverse()
         front_conv = front_conv1
         back_conv = back_conv1
-    cv2.imwrite('../Web/static/image_output/zheng.jpg', card_image[0])
-    cv2.imwrite('../Web/static/image_output/fan.jpg', card_image[1])
+    cv2.imwrite('../web_module/static/image_output/zheng.jpg', card_image[0])
+    cv2.imwrite('../web_module/static/image_output/fan.jpg', card_image[1])
 
     text_imgs = []
 
@@ -272,4 +274,3 @@ def getTextLine(image, points):
     # cv2.waitKey(0)
 
     return text_imgs
-

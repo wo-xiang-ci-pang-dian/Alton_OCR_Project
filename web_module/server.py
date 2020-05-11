@@ -1,17 +1,15 @@
 # -- coding: utf-8 --
 # @Time : 2020/3/28 下午6:03
 # @Author : Gao Shang
-# @File : upload_images.py
+# @File : server.py
 # @Software : PyCharm
 
-import flask
-from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify
+from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
 import os
 import cv2
-import time
 from datetime import timedelta
-from recognition_words_module.model import networks
+from train_model_module.model import networks
 from detection_card_module import detection_card
 from detection_text_module import detection_text
 from recognition_words_module import recognition_words
@@ -65,18 +63,20 @@ def upload():
         upload_path = os.path.join(current_path, 'static/image_input', 'test.jpg')
         f.save(upload_path)
 
+        # time_start = time.time()
         image = cv2.imread(upload_path, 0)
         points = detection_card.getCardPoint(image)
         text = detection_text.getTextLine(image, points)
         result = recognition_words.getWordsResult(text, model)
+        # time_end = time.time()
+        # recognition_time = time_end - time_start
 
-        return render_template('show_result.html', words=result, filename=secure_filename(f.filename))
+        return render_template('recognition.html', words=result, filename=secure_filename(f.filename))
 
-    return render_template('upload.html')
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
-    # app.debug = True
     load_model()
-    app.run(debug=True)
-
+    print('预加载模型成功')
+    app.run(debug=False)

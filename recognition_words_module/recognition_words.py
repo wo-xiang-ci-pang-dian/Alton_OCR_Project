@@ -9,7 +9,7 @@ import os
 import cv2
 import torch
 import numpy as np
-from recognition_words_module import model
+from train_model_module import model
 from recognition_words_module import decode
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -17,10 +17,7 @@ from recognition_words_module.alphabet import alphabet
 
 absolute_path = os.path.dirname(__file__)
 
-# with open('../data/alphabet.txt', 'r') as f:
-#     alphabet = f.read().replace('\n', '')
-# alphabet = [alphabet, '0123456789X-.长期']
-
+# WEB端会预加载，这里需要注释掉
 # model = [model.chsNet(1, len(alphabet[0]) + 1), model.digitsNet(1, len(alphabet[1]) + 1)]
 # if torch.cuda.is_available():
 #     # 中文模型
@@ -29,7 +26,7 @@ absolute_path = os.path.dirname(__file__)
 #     model[1] = model[1].cuda()
 # model[0].load_state_dict({k.replace('module.', ''): v for k, v in torch.load(absolute_path + '/data/chs.pth').items()})
 # model[1].load_state_dict({k.replace('module.', ''): v for k, v in torch.load(absolute_path + '/data/number.pth').items()})
-#
+
 
 # 定义词典，存储地区码和地址的对应关系
 lex_sex = ['男', '女']
@@ -138,8 +135,17 @@ def getWordsResult(images, model):
 
     year = decode.index_str(networkOutput(images[3], model[1]), alphabet[1])
     month = decode.index_str(networkOutput(images[4], model[1]), alphabet[1])
+    # 8 -> 08
+    if len(month) == 1:
+        month_id = '0' + month
+    else:
+        month_id = month
     day = decode.index_str(networkOutput(images[5], model[1]), alphabet[1])
-
+    # 8 -> 08
+    if len(day) == 1:
+        day_id = '0' + day
+    else:
+        day_id = day
     addr_output = networkOutput(images[6], model[0])
     region, score, t = decode.prefixBeamSearch(addr_output, lexicon[7])
     code_output = networkOutput(images[7], model[1])
@@ -160,7 +166,7 @@ def getWordsResult(images, model):
         t, _ = decode.prefixMatch(addr_output, alphabet[0], region)
 
     address = region + decode.index_str(addr_output[t + 1:], alphabet[0])
-    idnumber = id_code + year + month + day + id_tail
+    idnumber = id_code + year + month_id + day_id + id_tail
     agency = getBureauByCode(id_code)
 
     if len(images) == 16:
@@ -170,6 +176,7 @@ def getWordsResult(images, model):
         valid_day, _ = decode.wordBeamSearch(networkOutput(images[15], model[1]), lexicon[6])
         valid_date = valid_year + '.' + valid_month + '.' + valid_day + '-长期'
     else:
+        # 有效期
         valid_year_start = networkOutput(images[13], model[1])
         valid_year, score = decode.wordBeamSearch(valid_year_start, lexicon[9])
 
@@ -205,4 +212,5 @@ def getWordsResult(images, model):
         valid_date = '.' + valid_month + '.' + valid_day
         valid_date = valid_year + valid_date + '-' + valid_year1 + valid_date
 
-    return [name, sex, nation, year, month, day, address, idnumber, agency, valid_date]
+    # return [name, sex, nation, year, month, day, address, idnumber, agency, valid_date]
+    return [name, nation, sex, year, month, day, address, idnumber, agency, valid_date]

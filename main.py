@@ -4,16 +4,20 @@
 # @File : main.py
 # @Software : PyCharm
 
-
 import cv2
 import os
+import time
 from detection_card_module import detection_card
 from detection_text_module import detection_text
 from recognition_words_module import recognition_words
-import time
 
 
 def recognition(path):
+    """
+    调用各模块进行识别文字
+    :param path: 图片目录路径
+    :return: 识别结果和花费时间
+    """
     files = [file for file in os.listdir(path)]
     for name in files:
 
@@ -23,16 +27,17 @@ def recognition(path):
         text = detection_text.getTextLine(image, points)
         words = recognition_words.getWordsResult(text)
         time_end = time.time()
+        recognition_time = time_end - time_start
 
-        # 输出结果，测试使用
+        #  输出结果，测试使用
         # print('姓名；{name}\n性别：{sex}\n民族：{nation}\n''出生日期：{brith_year}年{brith_month}月{brith_day}日\n'
         #       '住址：{address}\n身份证号码：''{number}\n签证机关：{organization}\n有效期限：{date}'.format(
         #         name=words[0], sex=words[1], nation=words[2], brith_year=words[3], brith_month=words[4],
         #         brith_day=words[5], address=words[6], number=words[7], organization=words[8], date=words[9]))
         # print('------花费时间:{0}----------'.format(time_end - time_start))
-    return words
+    return words, recognition_time
 
 
 if __name__ == '__main__':
-    test_path = './test_images'
-    recognition(test_path)
+    image_path = './test_images'
+    recognition(image_path)
